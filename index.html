@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>陶喆音乐专辑溯源系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        /* 顶部唱片装饰 */
+        .vinyl-header {
+            text-align: center;
+            padding: 32px 20px 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vinyl-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .vinyl-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .vinyl-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .vinyl-icon::after {
+            content: '';
+            width: 24px;
+            height: 24px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .vinyl-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 2px;
+        }
+
+        .vinyl-header p {
+            font-size: 13px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            font-weight: 300;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            background: #f8f9fa;
+            border-radius: 24px 24px 0 0;
+            min-height: calc(100vh - 200px);
+            padding: 20px 16px 40px;
+            position: relative;
+        }
+
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 错误状态 */
+        .error-box {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .error-box .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* 专辑封面卡片 */
+        .album-hero {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .album-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: var(--album-color, #667eea);
+            opacity: 0.1;
+        }
+
+        .album-cover {
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--album-color, #667eea), #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .album-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .album-batch {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: monospace;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 状态标签 */
+        .status-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-tag {
+            flex: 1;
+            min-width: calc(50% - 4px);
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .status-tag .label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-tag .value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-tag.quality .value {
+            color: #059669;
+        }
+
+        .status-tag.quality {
+            border-left: 4px solid #10b981;
+        }
+
+        /* 信息卡片 */
+        .info-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .info-card h3 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .info-card h3 .icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row .label {
+            color: #888;
+            font-weight: 400;
+        }
+
+        .info-row .value {
+            color: #333;
+            font-weight: 500;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        /* 曲目列表 */
+        .track-list {
+            list-style: none;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 14px;
+        }
+
+        .track-item:last-child {
+            border-bottom: none;
+        }
+
+        .track-num {
+            width: 28px;
+            height: 28px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .track-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 时间轴 */
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            border-radius: 1px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+        }
+
+        .timeline-item.active::before {
+            background: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .timeline-text {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        /* 溯源结论 */
+        .conclusion-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .conclusion-box::before {
+            content: '"';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            font-size: 120px;
+            opacity: 0.1;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .conclusion-box h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .conclusion-box p {
+            font-size: 14px;
+            line-height: 1.8;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .footer .heart {
+            color: #e74c3c;
+            display: inline-block;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* 首页产品列表 */
+        .product-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .product-card:active {
+            transform: scale(0.98);
+        }
+
+        .product-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .product-card-cover {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--card-color, #667eea), #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .product-card-info h4 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .product-card-info p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .product-card-badge {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* 二维码提示 */
+        .qr-hint {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #92400e;
+        }
+
+        .qr-hint .icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        /* 响应式微调 */
+        @media (max-width: 380px) {
+            .album-cover {
+                width: 140px;
+                height: 140px;
+            }
+            .album-name {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部 -->
+        <div class="vinyl-header">
+            <div class="vinyl-icon">🎵</div>
+            <h1>陶喆音乐专辑溯源</h1>
+            <p>扫码查看专辑制作、发行与荣誉信息</p>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="main-content" id="app">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>正在加载专辑溯源信息...</p>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            用<span class="heart">♥</span>致敬华语R&B教父
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const productId = params.get('id');
+        const app = document.getElementById('app');
+
+        async function loadProduct() {
+            if (!productId) {
+                // 无id参数，显示专辑列表首页
+                await showProductList();
+                return;
+            }
+
+            try {
+                const response = await fetch('products.json');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const products = await response.json();
+                const product = products.find(p => p.id === productId);
+
+                if (!product) {
+                    app.innerHTML = `
+                        <div class="error-box">
+                            <div class="icon">😕</div>
+                            <h3>未找到该专辑信息</h3>
+                            <p>请检查链接中的编号是否正确</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                renderProduct(product);
+            } catch (error) {
+                app.innerHTML = `
+                    <div class="error-box">
+                        <div class="icon">⚠️</div>
+                        <h3>数据加载失败</h3>
+                        <p>请检查 products.json 文件是否正确上传</p>
+                        <p style="font-size:12px;color:#666;margin-top:8px;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function showProductList() {
+            try {
+                const response = await fetch('products.json');
+                const products = await response.json();
+
+                let html = `
+                    <div class="qr-hint">
+                        <span class="icon">📱</span>
+                        <div>选择下方专辑查看溯源信息，或用微信扫码直达</div>
+                    </div>
+                    <div class="product-grid">
+                `;
+
+                products.forEach(p => {
+                    html += `
+                        <a href="?id=${p.id}" class="product-card" style="--card-color: ${p.coverColor}">
+                            <div class="product-card-header">
+                                <div class="product-card-cover">💿</div>
+                                <div class="product-card-info">
+                                    <h4>${p.name}</h4>
+                                    <p>编号: ${p.id}</p>
+                                </div>
+                            </div>
+                            <span class="product-card-badge">${p.testResult}</span>
+                        </a>
+                    `;
+                });
+
+                html += `</div>`;
+                app.innerHTML = html;
+            } catch (error) {
+                app.innerHTML = `
+                    <div class="error-box">
+                        <div class="icon">⚠️</div>
+                        <h3>数据加载失败</h3>
+                        <p>无法读取 products.json</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderProduct(product) {
+            const isPassed = product.testResult.includes('合格') || product.testResult.includes('经典') || product.testResult.includes('巅峰') || product.testResult.includes('满分');
+
+            // 构建曲目列表HTML
+            const tracksHtml = product.tracks ? product.tracks.map((track, i) => `
+                <li class="track-item">
+                    <span class="track-num">${String(i + 1).padStart(2, '0')}</span>
+                    <span class="track-name">${track}</span>
+                </li>
+            `).join('') : '';
+
+            // 构建时间轴HTML
+            const timelineHtml = product.logistics.map((item, i) => {
+                const isLast = i === product.logistics.length - 1;
+                return `
+                    <div class="timeline-item ${isLast ? 'active' : ''}">
+                        <div class="timeline-date">${item.split(' ')[0]}</div>
+                        <div class="timeline-text">${item.split(' ').slice(1).join(' ')}</div>
+                    </div>
+                `;
+            }).join('');
+
+            app.innerHTML = `
+                <div class="album-hero" style="--album-color: ${product.coverColor}">
+                    <div class="album-cover">💿</div>
+                    <h2 class="album-name">${product.name}</h2>
+                    <span class="album-batch">${product.batch}</span>
+                </div>
+
+                <div class="status-bar">
+                    <div class="status-tag quality">
+                        <div class="label">质检评级</div>
+                        <div class="value">${product.testResult}</div>
+                    </div>
+                    <div class="status-tag">
+                        <div class="label">发行日期</div>
+                        <div class="value">${product.date}</div>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">📋</span>专辑基本信息</h3>
+                    <div class="info-row">
+                        <span class="label">音乐编号</span>
+                        <span class="value" style="font-family:monospace;font-size:12px;">${product.id}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">批次号</span>
+                        <span class="value">${product.batch}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">产地</span>
+                        <span class="value">${product.origin}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">发行日期</span>
+                        <span class="value">${product.date}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">典藏期限</span>
+                        <span class="value">${product.shelfLife}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">制作人</span>
+                        <span class="value">${product.producer}</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">🎧</span>曲目列表</h3>
+                    <ul class="track-list">
+                        ${tracksHtml}
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">🏆</span>检测信息</h3>
+                    <div class="info-row">
+                        <span class="label">评审机构</span>
+                        <span class="value">${product.testOrg}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">检测结果</span>
+                        <span class="value" style="color: ${isPassed ? '#059669' : '#dc2626'};font-weight:700;">${product.testResult}</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3><span class="icon">📦</span>制作与发行时间轴</h3>
+                    <div class="timeline">
+                        ${timelineHtml}
+                    </div>
+                </div>
+
+                <div class="conclusion-box">
+                    <h3>📜 溯源结论</h3>
+                    <p>${product.conclusion}</p>
+                </div>
+
+                <div style="text-align:center;padding:16px 0;">
+                    <a href="?" style="color:#667eea;text-decoration:none;font-size:14px;font-weight:500;">← 返回专辑列表</a>
+                </div>
+            `;
+        }
+
+        loadProduct();
+    </script>
+</body>
+</html>
